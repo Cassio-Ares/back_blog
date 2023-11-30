@@ -1,0 +1,4 @@
+*_lock.json
+node_modules
+mongo.js
+.env*
