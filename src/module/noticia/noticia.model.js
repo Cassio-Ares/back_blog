@@ -17,4 +17,4 @@ const noticiaSchema = new Schema(
     
 const NoticiaModel = mongoose.model('noticias', noticiaSchema);
 
-export default NoticiaModel;
+module.exports = NoticiaModel;   // forma certa de exportar um model
