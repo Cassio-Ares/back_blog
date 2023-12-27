@@ -1,47 +1,45 @@
 const express = require("express");
 const app = express();
 
-app.use(express.json()); // facilita uso de json (IMPORTANTE)
+app.use(express.json());
 
-const bcrypt = require("bcrypt"); // importação do bcrypt que irá criar a criptografia de nossas senhas
-const jwt = require("jsonwebtoken"); // importação do jwt que irá criar um token 
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
-
-const usuarioModel = require("./src/module/usuario/usuario.model.js"); // aqui trazemos model de usuario e iniciamos a conexão
-
-// IMPORTANTE olhas schema de usuario para ver como conexão foi feita.
+const usuarioModel = require("./src/module/usuario/usuario.model.js");
+const noticiaModel = require("./src/module/noticia/noticia.model.js");
 
 app.post("/login", async (req, res) => {
   if (!req.body.email) {
     return res.status(400).json({ message: "O campo e-mail é obrigatório" });
-  } // regra para tornar o campo required (se req.boby.email não existir mande a msg)
+  }
 
   if (!req.body.senha) {
     return res.status(400).json({ message: "O campo senha é obrigatório" });
-  } // regra para tornar o campo required (se req.boby.email não existir mande a msg)
+  }
 
-  const usuarioExistente = await usuarioModel.findOne({ email: req.body.email })
-  // regra que irá buscar dentro de email no nosso back usando findOne de email já existe
+  const usuarioExistente = await usuarioModel.findOne({
+    email: req.body.email,
+  });
 
   if (!usuarioExistente) {
     return res.status(400).json({ message: "Usuario não está cadastrado" });
-  }// regra para informar caso e-mail não seja cadastrado
+  }
 
-  const senhaVerificada = bcrypt.compareSync( req.body.senha, usuarioExistente.senha )
-  // regra que irá buscar dentro de usuarioExistente.senha a hash da senha e descriptografar para ver se senha bate
+  const senhaVerificada = bcrypt.compareSync(
+    req.body.senha,
+    usuarioExistente.senha
+  );
 
-  if(!senhaVerificada){
+  if (!senhaVerificada) {
     return res.status(400).json({ message: " Email ou senha incorretos" });
-  }// se senha for errada !senhaexistente (msg)
+  }
 
-  const token = jwt.sign({_id: usuarioExistente._id}, "token")
-  /*token de altenticação é um cracha que podemos carregar para identificar o usuario
-  aqui usamos o _id para criar o token {_id: usuarioExistente._id}*/
-  
+  const token = jwt.sign({ _id: usuarioExistente._id }, "token");
 
- return res.status(200).json({ message: "Login realizado com sucesso", token});
- //confirmamos o login e passamos o token para seu usado no front caso nescessario
-  
+  return res
+    .status(200)
+    .json({ message: "Login realizado com sucesso", token });
 });
 
 app.get("/usuarios", async (req, res) => {
@@ -52,42 +50,79 @@ app.get("/usuarios", async (req, res) => {
 app.post("/usuarios", async (req, res) => {
   if (!req.body.email) {
     return res.status(404).json({ message: "O campo e-mail é obrigatório" });
-    // regra para tornar o campo required (se req.boby.email não existir mande a msg)
   }
 
   if (!req.body.senha) {
     return res.status(404).json({ message: "O campos senha é obrigatório" });
-    // regra para tornar o campo required (se req.body.senha não existir mande a msg)
   }
 
   const usuarioExistente = await usuarioModel.findOne({
     email: req.body.email,
   });
-  //verificação se usuario já existe fazendo um findOne na tabela usuario buscando o email
 
   if (usuarioExistente) {
     return res.status(400).json({ message: "Usuario já existe" });
   }
 
   const senhaCrisptografada = bcrypt.hashSync(req.body.senha, 10);
-  //criptografia da senha usando o bcrypt
 
   const usuario = await usuarioModel.create({
     nome: req.body.nome,
     email: req.body.email,
     senha: senhaCrisptografada,
-    //segurança pois enviamos a senha criptografada para o banco
   });
-  // cadastro de novo usuario usuando o create metodo do mongodb
+
   return res.status(201).json(usuario);
 });
 
-app.get("/noticias", (req, res) => {
-  return res.status(200).json([]);
+app.get("/noticias", async (req, res) => {
+  /**
+   * primeiro montamos uma query que pegue a categoria na URL
+   * criamos uma variavel para receber estes dados que está vazia 
+   * e um if para pegar se algo for colocado
+   */
+   let filtroCategoria = {}
+   if(req.query.categoria){
+    filtroCategoria = { categoria: req.query.filtroCategoria}
+   }
+
+   /**
+    * aqui fazemos um find (busca em mongo) usando categorias como parametro
+    */
+
+    const noticias = await noticiaModel.find(filtroCategoria);
+  return res.status(200).json(noticias);
 });
 
-app.post("/noticias", (req, res) => {
-  return res.status(200).json([]);
+app.post("/noticias", async (req, res) => {
+  if(!req.body.titulo){
+    return res.status(400).json({message: "o Campo titulo é obrigatorio"})
+  }// montamos um required para as informações 
+
+  if(!req.body.img){
+    return res.status(400).json({message: "o Campo imagem é obrigatorio"})
+  }// montamos um required para as informações
+
+  if(!req.body.texto){
+    return res.status(400).json({message: "o Campo texto é obrigatorio"})
+  }// montamos um required para as informações
+
+  if(!req.body.categoria){
+    return res.status(400).json({message:"o Campo categoria é obrigatorio"})
+  }// montamos um required para as informações
+
+
+  /**
+   * estrutura de envio (criação) de dados na tabela usando o model 
+   * e enviando os dados pelo body no formato json
+   */
+  const noticia = await noticiaModel.create({
+    titulo: req.body.titulo,
+    img: req.body.img,
+    texto: req.body.texto,
+    categoria: req.body.categoria
+  })
+    return res.status(200).json(noticia);
 });
 
 app.listen(8080, () => {

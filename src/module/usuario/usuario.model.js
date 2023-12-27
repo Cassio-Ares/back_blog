@@ -1,8 +1,3 @@
-/**
- * const mongoose = require('../config/mongo.js'); 
- * aqui trazemos a conexão com o banco de dados e trazemos o mongoose
- * sendo assim no momento que o schema acionar ele já faz a conexão com o banco de dados
- */   
 const mongoose = require('../../config/mongo.js'); 
 
 
@@ -23,4 +18,4 @@ const usuarioSchema = new Schema(
   
     const UsuarioModel = mongoose.model('usuarios', usuarioSchema);
 
-  module.exports = UsuarioModel;  // forma certa de exportar um model
+  module.exports = UsuarioModel;  
