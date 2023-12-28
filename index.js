@@ -1,10 +1,14 @@
 const express = require("express");
 const app = express();
+const cors = require("cors"); //importamos o cors 
 
 app.use(express.json());
+app.use(cors()); //chamamos o cors pacote usada para não acontecer conflitos entre front e back 
 
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+
+
 
 const usuarioModel = require("./src/module/usuario/usuario.model.js");
 const noticiaModel = require("./src/module/noticia/noticia.model.js");
@@ -81,9 +85,9 @@ app.get("/noticias", async (req, res) => {
    * criamos uma variavel para receber estes dados que está vazia 
    * e um if para pegar se algo for colocado
    */
-   let filtroCategoria = {}
+   let filtroCategoria = {};
    if(req.query.categoria){
-    filtroCategoria = { categoria: req.query.filtroCategoria}
+    filtroCategoria = { categoria: req.query.categoria}
    }
 
    /**
